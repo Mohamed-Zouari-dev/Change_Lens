@@ -5,8 +5,13 @@ def run_cli():
 
     try:
         print(hash_file(file_path))
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' was not found.")
+    except PermissionError:
+        print(f"Error: Permission denied when trying to read '{file_path}'.")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"An unexpected error occurred: {e}")
+
 
 
 if __name__ == "__main__":
