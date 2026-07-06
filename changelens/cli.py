@@ -1,4 +1,4 @@
-from changelens.core.hasher import hash_file
+from core.hasher import hash_file
 
 def run_cli():
     file_path = input("Enter file path: ")
