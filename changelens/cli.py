@@ -1,22 +1,25 @@
-from core.snapshot import get_files_in_directory
-from core.hasher import generate_snapshot_dict
+from core.generator import create_snapshot_model
+from storage.json_store import save_snapshot
 
 def run_cli():
+    # Gather user inputs
     directory = input("Enter directory path to scan: ")
+    output_file = input("Enter output snapshot filename (e.g., my_snapshot.json): ")
 
     try:
-        # Step 1: Discover all files
-        found_files = get_files_in_directory(directory)
-        print(f"Found {len(found_files)} files. Calculating hashes...")
+        print(f"\nScanning '{directory}'...")
         
-        # Step 2: Generate the hash dictionary
-        hash_dict = generate_snapshot_dict(directory, found_files)
+        # 1. Generate the snapshot data model
+        snapshot = create_snapshot_model(directory)
         
-        # Step 3: Output the results
-        print(f"\n--- Scan Results ---")
-        for rel_path, file_hash in hash_dict.items():
-            print(f"{rel_path}: {file_hash}")
-            
+        # 2. Persist to disk
+        save_snapshot(snapshot, output_file)
+        
+        # 3. Feedback
+        total = snapshot["metadata"]["total_files"]
+        print(f"Success! Snapshot saved to '{output_file}'.")
+        print(f"Successfully tracked {total} files.")
+        
     except FileNotFoundError as e:
         print(f"Error: {e}")
     except NotADirectoryError as e:
