@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-
+from typing import List
 from core.generator import create_snapshot_model
 from core.verifier import verify_live_directory
 from core.diff_engine import calculate_snapshot_diff
@@ -59,9 +59,15 @@ def render_report(report: IntegrityReport):
 
 
 @app.command(name="init")
+@app.command(name="init")
 def init(
     directory: Path = typer.Argument(Path("."), help="The target directory path to initialize."),
-    output: Path = typer.Option(Path("baseline.json"), "--output", "-o", help="Where to save the baseline snapshot.")
+    output: Path = typer.Option(Path("baseline.json"), "--output", "-o", help="Where to save the baseline snapshot."),
+    exclude: List[str] = typer.Option(
+        None, 
+        "--exclude", "-e", 
+        help="Glob patterns to ignore (e.g. '*.log', '__pycache__/*'). Can be passed multiple times."
+    )
 ):
     """Initialize ChangeLens and generate the initial baseline snapshot."""
     try:
@@ -70,8 +76,14 @@ def init(
             console.print(f"[bold red][ERROR] Path '{target_path}' is invalid or not a directory.[/bold red]")
             raise typer.Exit(code=1)
 
+        # Convert tuple from Typer to a standard list
+        exclusion_list = list(exclude) if exclude else []
+
         console.print(f"Initializing baseline snapshot for: [cyan]'{target_path}'[/cyan]...")
-        snapshot = create_snapshot_model(str(target_path))
+        if exclusion_list:
+            console.print(f"Applying exclusions: [dim]{exclusion_list}[/dim]")
+            
+        snapshot = create_snapshot_model(str(target_path), exclude_patterns=exclusion_list)
         
         save_snapshot(snapshot, str(output))
         
@@ -81,10 +93,9 @@ def init(
         
     except Exception as e:
         console.print(f"[bold red][CRITICAL] Initialization failed: {e}[/bold red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1)@app.command(name="verify")
+    
 
-
-@app.command(name="verify")
 def verify(
     snapshot_file: Path = typer.Argument(..., help="Path to the historical baseline snapshot JSON."),
     directory: Path = typer.Argument(Path("."), help="Path to the live directory to verify.")
