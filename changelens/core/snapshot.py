@@ -1,7 +1,7 @@
 from pathlib import Path
+from typing import List
 
-def get_files_in_directory(directory: str) -> list:
-    """Returns a list of Path objects for all files in the directory."""
+def get_files_in_directory(directory: str) -> List[Path]:
     target = Path(directory)
 
     if not target.exists():
@@ -9,5 +9,4 @@ def get_files_in_directory(directory: str) -> list:
     if not target.is_dir():
         raise NotADirectoryError(f"'{directory}' is not a directory.")
 
-    # Simply collect and return the file paths
     return [file for file in target.rglob("*") if file.is_file()]
