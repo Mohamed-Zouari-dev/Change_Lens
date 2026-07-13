@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List
 from datetime import datetime
-import uuid
 
 @dataclass
 class ModifiedFile:
@@ -24,8 +23,7 @@ class AuditMetadata:
     target_directory: str
     base_snapshot_time: str
     verification_time: str = field(default_factory=lambda: datetime.now().isoformat())
-    report_id: str = field(default_factory=lambda: f"aud_{uuid.uuid4().hex[:8]}")
-    status: str = "CLEAN"
+    status: str = "CLEAN"  
 
 @dataclass
 class AuditSummary:
@@ -38,7 +36,7 @@ class AuditSummary:
 
 @dataclass
 class ChangeCategories:
-    modified: List[ModifiedFile] = field(default_factory=list)
+    modified: List[ModifiedFile] = field(default_factory=list)  # Restored
     added: List[AddedFile] = field(default_factory=list)
     deleted: List[DeletedFile] = field(default_factory=list)
 

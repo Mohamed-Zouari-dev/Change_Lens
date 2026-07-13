@@ -12,10 +12,6 @@ def hash_file(file_path: Union[str, Path]) -> str:
     return hash_func.hexdigest()
 
 def generate_file_states(target_dir: str, files: List[Path]) -> Dict[str, dict]:
-    """
-    Iterates through a list of files and generates state metadata.
-    Returns: { "relative/path.py": {"hash": "...", "mtime": 12345.6} }
-    """
     target = Path(target_dir)
     file_states = {}
     
@@ -23,10 +19,8 @@ def generate_file_states(target_dir: str, files: List[Path]) -> Dict[str, dict]:
         try:
             rel_path = str(file.relative_to(target))
             
-            # Capture state attributes
             file_states[rel_path] = {
-                "hash": hash_file(file),
-                "mtime": file.stat().st_mtime
+                "hash": hash_file(file)
             }
             
         except PermissionError:
