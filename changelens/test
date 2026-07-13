@@ -1,0 +1,73 @@
+{
+    "metadata": {
+        "timestamp": "2026-07-13T14:55:12.694153",
+        "root_directory": "/home/mohamed/Change_Lens/changelens",
+        "total_files": 16
+    },
+    "files": {
+        "__init__.py": {
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "mtime": 1783362899.970174
+        },
+        "models.py": {
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "mtime": 1783362943.0170975
+        },
+        "cli.py": {
+            "hash": "9cff62799c608cfce99dff38e63df1266026299ebdd0f86084b10b0197e32ead",
+            "mtime": 1783950874.7128844
+        },
+        "core/hasher.py": {
+            "hash": "13c86a8350269f797771b0e2dceedfe200e47e0235ec1ad672aeee7279a7ec77",
+            "mtime": 1783950697.4171236
+        },
+        "core/__init__.py": {
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "mtime": 1783362879.676665
+        },
+        "core/generator.py": {
+            "hash": "87a3275fcc4e7d0ff197efcef715ce6471d43337065a82230408ef45855f53dd",
+            "mtime": 1783950778.592478
+        },
+        "core/snapshot.py": {
+            "hash": "894d699a1e101648351b88daa03533d14bd7e547ccc989eb3af4745be368acb0",
+            "mtime": 1783950652.5874128
+        },
+        "storage/__init__.py": {
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "mtime": 1783362929.1121917
+        },
+        "storage/json_store.py": {
+            "hash": "6c36d1adbb99b0423844c090e91cfa89531ab9ba39cb768bf52b55617b5c7577",
+            "mtime": 1783950816.2669451
+        },
+        "__pycache__/__init__.cpython-313.pyc": {
+            "hash": "2b76422e7096d8ec8ee3fc3a21973f2522be3ca2a8052830dbaecccd99dd0339",
+            "mtime": 1783369636.2811072
+        },
+        "storage/__pycache__/__init__.cpython-313.pyc": {
+            "hash": "cb41678ef54814aa823b0df578379866a0231ff86c4ace036c73e2ce9faa3285",
+            "mtime": 1783950897.2893202
+        },
+        "storage/__pycache__/json_store.cpython-313.pyc": {
+            "hash": "381031b07fa52c3823d25bf1956788208ee3f25861bc85614155993b97766b0e",
+            "mtime": 1783950897.2896733
+        },
+        "core/__pycache__/snapshot.cpython-313.pyc": {
+            "hash": "97bb381183b423bd4187abe55829e4c03cde488c6e9277648e6a5ba7c8350359",
+            "mtime": 1783950897.2864358
+        },
+        "core/__pycache__/generator.cpython-313.pyc": {
+            "hash": "91c6717d3eee454f5592de41944771cdb20dbf4d09bb2b6053fd4e3d7829a678",
+            "mtime": 1783950897.2782683
+        },
+        "core/__pycache__/hasher.cpython-313.pyc": {
+            "hash": "7b658dd6fc5225663861f245b5a42fc312fb93b4114cb1c6322c403ca7588075",
+            "mtime": 1783950897.2868872
+        },
+        "core/__pycache__/__init__.cpython-313.pyc": {
+            "hash": "62835ee81d8a53dfb240804e17f4bfef82c3a689b65c32eaef0b94c37a80d0b0",
+            "mtime": 1783369636.2812626
+        }
+    }
+}
