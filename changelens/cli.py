@@ -1,129 +1,134 @@
 from pathlib import Path
 import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 from core.generator import create_snapshot_model
 from core.verifier import verify_live_directory
+from core.diff_engine import calculate_snapshot_diff
 from storage.json_store import save_snapshot, load_snapshot
+from models import IntegrityReport
 
-# Initialize the Typer registry
+# Initialize CLI and Rich Console
 app = typer.Typer(
     name="changelens",
     help="ChangeLens: A high-performance file integrity monitoring CLI tool.",
     add_completion=False,
 )
+console = Console()
+
+def render_report(report: IntegrityReport):
+    """Shared UI component to render the IntegrityReport using Rich."""
+    
+    # 1. Summary Panel
+    status_color = "green" if report.summary.is_clean else "red"
+    summary_text = (
+        f"Status: [{status_color} bold]{report.audit_metadata.status}[/]\n"
+        f"Base Snapshot: {report.audit_metadata.base_snapshot_time}\n"
+        f"Verification Time: {report.audit_metadata.verification_time}\n\n"
+        f"Files Scanned: {report.summary.files_scanned} | "
+        f"Matched: {report.summary.files_matched}"
+    )
+    console.print(Panel(summary_text, title="Integrity Audit Report", border_style=status_color))
+
+    # 2. Clean State Exit
+    if report.summary.is_clean:
+        console.print("[bold green][OK] Success: System state perfectly matches baseline.[/bold green]\n")
+        return
+
+    # 3. Violations Table
+    table = Table(title="Detected Deviations", show_header=True, header_style="bold magenta")
+    table.add_column("State", style="bold", width=12)
+    table.add_column("File Path", style="cyan")
+    table.add_column("Details (Hashes)", style="dim")
+
+    for file in report.changes.modified:
+        details = f"Old: {file.old_hash[:16]}...\nNew: {file.new_hash[:16]}..."
+        table.add_row("[red]MODIFIED[/red]", file.path, details)
+
+    for file in report.changes.added:
+        table.add_row("[yellow]ADDED[/yellow]", file.path, f"Hash: {file.current_hash[:16]}...")
+
+    for file in report.changes.deleted:
+        table.add_row("[magenta]DELETED[/magenta]", file.path, f"Last: {file.last_known_hash[:16]}...")
+
+    console.print(table)
+    console.print("\n")
 
 
 @app.command(name="init")
 def init(
-    directory: Path = typer.Argument(
-        Path("."), 
-        help="The target directory path to initialize and scan. Defaults to the current directory."
-    ),
-    output: Path = typer.Option(
-        Path("baseline.json"), 
-        "--output", "-o", 
-        help="The path where the initial baseline snapshot JSON will be saved."
-    )
+    directory: Path = typer.Argument(Path("."), help="The target directory path to initialize."),
+    output: Path = typer.Option(Path("baseline.json"), "--output", "-o", help="Where to save the baseline snapshot.")
 ):
-    """
-    Initialize ChangeLens on a directory and generate its initial baseline snapshot.
-    """
+    """Initialize ChangeLens and generate the initial baseline snapshot."""
     try:
-        # Resolve path to absolute for unambiguous tracking
         target_path = directory.resolve()
-        
-        if not target_path.exists():
-            typer.secho(f"[ERROR] Target directory '{target_path}' does not exist.", fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1)
-            
         if not target_path.is_dir():
-            typer.secho(f"[ERROR] Path '{target_path}' is a file, not a directory.", fg=typer.colors.RED, err=True)
+            console.print(f"[bold red][ERROR] Path '{target_path}' is invalid or not a directory.[/bold red]")
             raise typer.Exit(code=1)
 
-        typer.echo(f"\nInitializing baseline snapshot for: '{target_path}'...")
+        console.print(f"Initializing baseline snapshot for: [cyan]'{target_path}'[/cyan]...")
         snapshot = create_snapshot_model(str(target_path))
         
-        # Persist baseline to disk
         save_snapshot(snapshot, str(output))
         
-        total_files = snapshot["metadata"]["total_files"]
-        typer.secho(
-            f"[SUCCESS] Initialized baseline tracking for {total_files} files.\n"
-            f"Snapshot saved to: '{output}'", 
-            fg=typer.colors.GREEN, 
-            bold=True
-        )
+        total = snapshot["metadata"]["total_files"]
+        console.print(f"[bold green][SUCCESS] Baseline created tracking {total} files.[/bold green]")
+        console.print(f"Saved to: [bold]'{output}'[/bold]")
         
     except Exception as e:
-        typer.secho(f"[CRITICAL] Failure during initialization: {e}", fg=typer.colors.RED, err=True)
+        console.print(f"[bold red][CRITICAL] Initialization failed: {e}[/bold red]")
         raise typer.Exit(code=1)
 
 
 @app.command(name="verify")
 def verify(
-    snapshot_file: Path = typer.Argument(
-        ..., 
-        help="Path to the historical baseline snapshot JSON file."
-    ),
-    directory: Path = typer.Argument(
-        Path("."), 
-        help="Path to the live directory to verify. Defaults to the current directory."
-    )
+    snapshot_file: Path = typer.Argument(..., help="Path to the historical baseline snapshot JSON."),
+    directory: Path = typer.Argument(Path("."), help="Path to the live directory to verify.")
 ):
-    """
-    Compare a live directory against an initialized baseline snapshot to detect deviations.
-    """
+    """Compare a live directory against a baseline snapshot."""
     try:
         target_path = directory.resolve()
-        
-        typer.echo(f"\nLoading baseline snapshot context from '{snapshot_file}'...")
+        console.print(f"Loading baseline from [cyan]'{snapshot_file}'[/cyan]...")
         stored_snapshot = load_snapshot(str(snapshot_file))
         
-        typer.echo(f"Performing real-time cryptographic verification on '{target_path}'...")
+        console.print(f"Verifying live directory [cyan]'{target_path}'[/cyan]...")
         report = verify_live_directory(stored_snapshot, str(target_path))
         
-        # Format and construct the output dashboard using ANSI colors
-        typer.echo("\n================ INTEGRITY AUDIT REPORT ================")
-        typer.echo(f"Status:                {report.audit_metadata.status}")
-        typer.echo(f"Base Snapshot Time:    {report.audit_metadata.base_snapshot_time}")
-        typer.echo(f"Verification Run Time: {report.audit_metadata.verification_time}")
-        typer.echo("--------------------------------------------------------")
-        
-        if report.summary.is_clean:
-            typer.secho(
-                f"[OK] Success: System state perfectly matches baseline. ({report.summary.files_matched} files verified)", 
-                fg=typer.colors.GREEN, 
-                bold=True
-            )
-            typer.echo("========================================================")
-            return
-
-        # Output granular violations
-        if report.changes.modified:
-            typer.secho(f"\nMODIFIED FILES ({report.summary.files_modified}):", fg=typer.colors.RED, bold=True)
-            for file in report.changes.modified:
-                typer.echo(f"  - {file.path}")
-                typer.echo(f"    [Old]: {file.old_hash[:16]}...")
-                typer.echo(f"    [New]: {file.new_hash[:16]}...")
-                
-        if report.changes.added:
-            typer.secho(f"\nADDED FILES ({report.summary.files_added}):", fg=typer.colors.YELLOW, bold=True)
-            for file in report.changes.added:
-                typer.echo(f"  - {file.path} (Hash: {file.current_hash[:16]}...)")
-                
-        if report.changes.deleted:
-            typer.secho(f"\nDELETED FILES ({report.summary.files_deleted}):", fg=typer.colors.MAGENTA, bold=True)
-            for file in report.changes.deleted:
-                typer.echo(f"  - {file.path} (Last Hash: {file.last_known_hash[:16]}...)")
-                
-        typer.echo("========================================================")
-        raise typer.Exit(code=2)
-        
-    except FileNotFoundError as e:
-        typer.secho(f"[ERROR] File Operational Error: {e}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=1)
+        render_report(report)
+        if not report.summary.is_clean:
+            raise typer.Exit(code=2)
+            
     except Exception as e:
-        typer.secho(f"[CRITICAL] Runtime Failure during verification: {e}", fg=typer.colors.RED, err=True)
+        console.print(f"[bold red][ERROR] Verification failed: {e}[/bold red]")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="diff")
+def diff(
+    base_file: Path = typer.Argument(..., help="Path to the original baseline snapshot JSON."),
+    target_file: Path = typer.Argument(..., help="Path to the newer snapshot JSON to compare against.")
+):
+    """Compare two stored snapshot files offline."""
+    try:
+        console.print(f"Loading base: [cyan]'{base_file}'[/cyan]...")
+        base_snapshot = load_snapshot(str(base_file))
+        
+        console.print(f"Loading target: [cyan]'{target_file}'[/cyan]...")
+        target_snapshot = load_snapshot(str(target_file))
+        
+        # Calculate the mathematical diff between the two JSON models
+        report = calculate_snapshot_diff(base_snapshot, target_snapshot)
+        
+        render_report(report)
+        if not report.summary.is_clean:
+            raise typer.Exit(code=2)
+            
+    except Exception as e:
+        console.print(f"[bold red][ERROR] Diff failed: {e}[/bold red]")
         raise typer.Exit(code=1)
 
 
