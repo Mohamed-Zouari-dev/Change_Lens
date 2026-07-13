@@ -80,7 +80,7 @@ def verify(
         
         if report.summary.is_clean:
             typer.secho(
-                f"✅ Success: System state perfectly matches baseline. ({report.summary.files_matched} files verified)", 
+                f"Success: System state perfectly matches baseline. ({report.summary.files_matched} files verified)", 
                 fg=typer.colors.GREEN, 
                 bold=True
             )
@@ -89,19 +89,19 @@ def verify(
 
         # Output granular violations
         if report.changes.modified:
-            typer.secho(f"\n❌ MODIFIED FILES ({report.summary.files_modified}):", fg=typer.colors.RED, bold=True)
+            typer.secho(f"\nMODIFIED FILES ({report.summary.files_modified}):", fg=typer.colors.RED, bold=True)
             for file in report.changes.modified:
                 typer.echo(f"  - {file.path}")
                 typer.echo(f"    [Old]: {file.old_hash[:16]}...")
                 typer.echo(f"    [New]: {file.new_hash[:16]}...")
                 
         if report.changes.added:
-            typer.secho(f"\n➕ ADDED FILES ({report.summary.files_added}):", fg=typer.colors.YELLOW, bold=True)
+            typer.secho(f"\n +++ ADDED FILES ({report.summary.files_added}):", fg=typer.colors.YELLOW, bold=True)
             for file in report.changes.added:
                 typer.echo(f"  - {file.path} (Hash: {file.current_hash[:16]}...)")
                 
         if report.changes.deleted:
-            typer.secho(f"\n🗑️  DELETED FILES ({report.summary.files_deleted}):", fg=typer.colors.MAGENTA, bold=True)
+            typer.secho(f"\n ---  DELETED FILES ({report.summary.files_deleted}):", fg=typer.colors.MAGENTA, bold=True)
             for file in report.changes.deleted:
                 typer.echo(f"  - {file.path} (Last Hash: {file.last_known_hash[:16]}...)")
                 
@@ -111,10 +111,10 @@ def verify(
         raise typer.Exit(code=2)
         
     except FileNotFoundError as e:
-        typer.secho(f"❌ File Operational Error: {e}", fg=typer.colors.RED, err=True)
+        typer.secho(f"File Operational Error: {e}", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1)
     except Exception as e:
-        typer.secho(f"💥 Runtime Failure during verification: {e}", fg=typer.colors.RED, err=True)
+        typer.secho(f"Runtime Failure during verification: {e}", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1)
 
 
