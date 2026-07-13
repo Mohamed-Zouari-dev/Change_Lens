@@ -3,14 +3,14 @@ name: Build and Publish Production Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers the pipeline only when pushing a version tag (e.g., v1.0.0)
+      - 'v*.*.*'
 
 jobs:
   publish-release:
     name: Build Python Wheel and Create GitHub Release
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Crucial: Gives the runner authorization to upload release assets
+      contents: write
 
     steps:
       - name: Checkout Source Code
@@ -27,6 +27,7 @@ jobs:
           python -m pip install build
 
       - name: Compile Distribution Artifacts
+        working-directory: ./changelens  # 👈 Tells GitHub to step into the nested project folder
         run: |
           python -m build
 
@@ -34,8 +35,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.whl
-            dist/*.tar.gz
-          generate_release_notes: true  # Automatically parses your commit messages into a clean changelog
+            changelens/dist/*.whl
+            changelens/dist/*.tar.gz
+          generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Seamless native authentication
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
