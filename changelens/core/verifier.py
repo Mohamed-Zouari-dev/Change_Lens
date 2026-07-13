@@ -1,14 +1,18 @@
 from typing import Dict, Any
 from core.generator import create_snapshot_model
 from core.diff_engine import calculate_snapshot_diff
+from models import IntegrityReport
 
-def verify_live_directory(stored_snapshot: Dict[str, Any], target_directory: str) -> Dict[str, Any]:
+def verify_live_directory(stored_snapshot: Dict[str, Any], target_directory: str) -> IntegrityReport:
     """
-    Generates a live snapshot of a directory and computes its differences 
-    against a historically stored snapshot structure.
+    Generates a live snapshot using the EXACT SAME exclusions defined in the 
+    historical baseline, then computes the difference.
     """
-    # Generate the live representation of the filesystem
-    live_snapshot = create_snapshot_model(target_directory)
+    # Extract historical rules (defaults to empty list if not found)
+    historical_exclusions = stored_snapshot.get("metadata", {}).get("exclusions", [])
     
-    # Compute the diff using the pure engine
+    # Generate the live representation, forcing it to use the baseline's rules
+    live_snapshot = create_snapshot_model(target_directory, exclude_patterns=historical_exclusions)
+    
+    # Compute the diff
     return calculate_snapshot_diff(stored_snapshot, live_snapshot)
