@@ -1,29 +1,34 @@
-from datetime import datetime
 from pathlib import Path
-from typing import Dict
-
-from core.snapshot import get_files_in_directory
+from typing import Dict, Any, List
+from datetime import datetime
 from core.hasher import generate_file_states
+from core.filters import is_excluded
 
-def create_snapshot_model(directory: str) -> Dict:
+def create_snapshot_model(target_dir: str, exclude_patterns: List[str] = None) -> Dict[str, Any]:
     """
-    Orchestrates the creation of a full snapshot data model, combining 
-    file discovery, state generation, and contextual metadata.
+    Discovers files, applies exclusion filters, and builds the snapshot dictionary.
     """
-    # 1. Discover all files
-    files = get_files_in_directory(directory)
+    if exclude_patterns is None:
+        exclude_patterns = []
+
+    target = Path(target_dir)
+    discovered_files = []
     
-    # 2. Generate states (hashes and mtimes)
-    file_states = generate_file_states(directory, files)
+    # 1. Discover and Filter Files
+    for file in target.rglob("*"):
+        if file.is_file() and not is_excluded(file, target, exclude_patterns):
+            discovered_files.append(file)
+            
+    # 2. Compute Cryptographic Hashes
+    file_states = generate_file_states(str(target), discovered_files)
     
-    # 3. Assemble the Data Model
-    snapshot_model = {
+    # 3. Build and return the snapshot model
+    return {
         "metadata": {
+            "root_directory": str(target.resolve()),
             "timestamp": datetime.now().isoformat(),
-            "root_directory": str(Path(directory).resolve()),
-            "total_files": len(file_states)
+            "total_files": len(file_states),
+            "exclusions": exclude_patterns  # <-- Saved to the baseline!
         },
         "files": file_states
     }
-    
-    return snapshot_model
