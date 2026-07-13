@@ -1,8 +1,9 @@
 import hashlib
 from pathlib import Path
+from typing import Dict, Union, List
 
-def hash_file(file_path: str | Path) -> str:
-    """Hashes a single file efficiently in chunks."""
+def hash_file(file_path: Union[str, Path]) -> str:
+    """Hashes a single file efficiently in chunks to prevent memory bloat."""
     hash_func = hashlib.sha256()
     with open(file_path, 'rb') as f:
         for chunk in iter(lambda: f.read(65536), b""):
@@ -10,25 +11,27 @@ def hash_file(file_path: str | Path) -> str:
     
     return hash_func.hexdigest()
 
-def generate_snapshot_dict(target_dir: str, files: list) -> dict:
-    """Iterates through a list of files and returns a {relative_path: hash} dictionary."""
+def generate_file_states(target_dir: str, files: List[Path]) -> Dict[str, dict]:
+    """
+    Iterates through a list of files and generates state metadata.
+    Returns: { "relative/path.py": {"hash": "...", "mtime": 12345.6} }
+    """
     target = Path(target_dir)
-    snapshot = {}
+    file_states = {}
     
     for file in files:
         try:
-            # 1. Calculate the hash using your existing function
-            file_hash = hash_file(file)
-            
-            # 2. Determine the relative path string
             rel_path = str(file.relative_to(target))
             
-            # 3. Add to dictionary
-            snapshot[rel_path] = file_hash
+            # Capture state attributes
+            file_states[rel_path] = {
+                "hash": hash_file(file),
+                "mtime": file.stat().st_mtime
+            }
             
         except PermissionError:
-            print(f"Warning: Permission denied for {file}. Skipping.")
+            print(f"Warning: Permission denied for '{file}'. Skipping.")
         except Exception as e:
-            print(f"Warning: Could not process {file}: {e}")
+            print(f"Warning: Could not process '{file}': {e}")
             
-    return snapshot
+    return file_states
