@@ -1,15 +1,5 @@
-from core.generator import create_snapshot_model
 from core.verifier import verify_live_directory
-from storage.json_store import save_snapshot, load_snapshot
-
-def handle_create_snapshot():
-    directory = input("Enter directory path to scan: ").strip()
-    output_file = input("Enter output snapshot filename (e.g., base.json): ").strip()
-    
-    print(f"\nScanning '{directory}'...")
-    snapshot = create_snapshot_model(directory)
-    save_snapshot(snapshot, output_file)
-    print(f"Success! Snapshot saved to '{output_file}'.")
+from storage.json_store import load_snapshot
 
 def handle_verify_integrity():
     snapshot_file = input("Enter the path to the stored snapshot JSON: ").strip()
@@ -17,61 +7,41 @@ def handle_verify_integrity():
     
     try:
         stored_snapshot = load_snapshot(snapshot_file)
-        diff = verify_live_directory(stored_snapshot, directory)
         
-        summary = diff["summary"]
+        # This now returns our structured IntegrityReport object
+        report = verify_live_directory(stored_snapshot, directory)
         
         print("\n================ INTEGRITY REPORT ================")
-        print(f"Base Snapshot Time:    {summary['base_timestamp']}")
-        print(f"Verification Run Time: {summary['current_timestamp']}")
+        print(f"Report ID:             {report.audit_metadata.report_id}")
+        print(f"Status:                {report.audit_metadata.status}")
+        print(f"Base Snapshot Time:    {report.audit_metadata.base_snapshot_time}")
+        print(f"Verification Run Time: {report.audit_metadata.verification_time}")
         print("--------------------------------------------------")
         
-        has_changes = (summary["added_count"] > 0 or 
-                       summary["deleted_count"] > 0 or 
-                       summary["modified_count"] > 0)
-        
-        if not has_changes:
-            print("✅ Success: System state matches baseline perfectly.")
+        if report.summary.is_clean:
+            print(f" Success: System state perfectly matches baseline.")
+            print(f"   ({report.summary.files_matched} files verified)")
             print("==================================================")
             return
 
-        if diff["modified"]:
-            print(f"\n❌ MODIFIED FILES ({summary['modified_count']}):")
-            for file in diff["modified"]:
-                print(f"  - {file['path']}")
-                print(f"    [Old]: {file['old_hash'][:16]}...")
-                print(f"    [New]: {file['new_hash'][:16]}...")
+        if report.changes.modified:
+            print(f"\nMODIFIED FILES ({report.summary.files_modified}):")
+            for file in report.changes.modified:
+                print(f"  - {file.path}")
+                print(f"    [Old]: {file.old_hash[:16]}...")
+                print(f"    [New]: {file.new_hash[:16]}...")
                 
-        if diff["added"]:
-            print(f"\n➕ ADDED FILES ({summary['added_count']}):")
-            for file in diff["added"]:
-                print(f"  - {file['path']} (Hash: {file['current_hash'][:16]}...)")
+        if report.changes.added:
+            print(f"\n ++ ADDED FILES ({report.summary.files_added}):")
+            for file in report.changes.added:
+                print(f"  - {file.path} (Hash: {file.current_hash[:16]}...)")
                 
-        if diff["deleted"]:
-            print(f"\n🗑️  DELETED FILES ({summary['deleted_count']}):")
-            for file in diff["deleted"]:
-                print(f"  - {file['path']} (Last Hash: {file['last_known_hash'][:16]}...)")
+        if report.changes.deleted:
+            print(f"\n -- DELETED FILES ({report.summary.files_deleted}):")
+            for file in report.changes.deleted:
+                print(f"  - {file.path} (Last Hash: {file.last_known_hash[:16]}...)")
                 
         print("==================================================")
         
     except FileNotFoundError:
         print(f"Error: Snapshot file '{snapshot_file}' could not be located.")
-
-def run_cli():
-    print("ChangeLens File Integrity Monitor")
-    print("1. Create New Snapshot")
-    print("2. Verify Directory Integrity")
-    choice = input("Select an option (1/2): ").strip()
-    
-    try:
-        if choice == "1":
-            handle_create_snapshot()
-        elif choice == "2":
-            handle_verify_integrity()
-        else:
-            print("Invalid choice.")
-    except Exception as e:
-        print(f"\nAn unexpected runtime error occurred: {e}")
-
-if __name__ == "__main__":
-    run_cli()
