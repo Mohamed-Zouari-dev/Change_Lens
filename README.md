@@ -1,59 +1,76 @@
-# ChangeLens
-
-ChangeLens is a high-performance, point-in-time File Integrity Monitor (FIM) and cryptographic auditing CLI utility. Built for security compliance, automated system auditing, and post-incident forensics, ChangeLens captures deterministic snapshots of file states and instantly detects unauthorized file modifications, additions, or deletions.
-
----
-
-# Core Features
-
-* **Multi-Threaded Performance**  
-  Concurrent, zero-leak cryptographic file hashing optimized for large, deep enterprise filesystems.
-
-* **Cryptographic Tamper Protection**  
-  Optional snapshot signing via HMAC-SHA256 to prevent attackers from altering baseline logs.
-
-* **Persistent Exclusion Contract**  
-  Local `.changelensignore` wildcards (similar to `.gitignore`) are compiled directly into the snapshot contract so verification runs remain completely drift-proof.
-
-* **Offline Forensic Diff Engine**  
-  Compare two historical snapshots completely offline without requiring access to the live environment.
-
-* **CI/CD & Automation Ready**  
-  Structured JSON summaries for SIEM pipelines alongside clean Markdown summaries for automated GitHub Action/GitLab CI job logs.
-
----
-
 # Installation
 
 ## Production Installation (Recommended)
 
-ChangeLens is distributed as a pre-compiled Python Wheel via GitHub Releases. You do not need to clone the source code to use it.
+ChangeLens is distributed as a pre-built Python Wheel via GitHub Releases.
 
-Download and install the latest release directly via pip:
+Install the latest release directly with pip:
 
 ```bash
-pip install pip install https://github.com/Mohamed-Zouari-dev/Change_Lens/releases/download/v1.0.0/changelens-1.0.0-py3-none-any.whl
+python -m pip install https://github.com/Mohamed-Zouari-dev/Change_Lens/releases/download/v1.0.0/changelens-1.0.0-py3-none-any.whl
 ```
+
+Alternatively, if `pip` is already available on your PATH:
+
+```bash
+pip install https://github.com/Mohamed-Zouari-dev/Change_Lens/releases/download/v1.0.0/changelens-1.0.0-py3-none-any.whl
+```
+
+### Windows Users
+
+If `changelens` is not recognized after installation:
+
+```text
+'changelens' is not recognized as an internal or external command
+```
+
+add your Python **Scripts** directory to your `PATH`.
+
+For a standard per-user installation, it is typically located at:
+
+```text
+C:\Users\<YourUsername>\AppData\Local\Python\pythoncore-<PythonVersion>\Scripts
+```
+
+Restart your terminal after updating your PATH.
+
+You can also invoke the executable directly from that directory if needed.
 
 ---
 
 ## Local Development Setup
 
-To contribute to the project or inspect the codebase, clone the repository and install it in editable mode:
+Clone the repository and install it in editable mode:
 
 ```bash
 git clone https://github.com/Mohamed-Zouari-dev/Change_Lens.git
-cd changelens
-pip install -e .
+cd Change_Lens
+python -m pip install -e .
 ```
-
----
 
 # Getting Started
 
-Once installed, the global `changelens` binary is available anywhere on your system path.
+Once installed, the `changelens` command is available from your terminal. If you're on Windows and the command isn't recognized, add your Python `Scripts` directory to your `PATH` as described above.
 
 ---
+## Verify Installation
+
+Confirm that ChangeLens was installed successfully:
+
+```bash
+changelens --help
+```
+
+Expected output:
+
+```text
+Usage: changelens [OPTIONS] COMMAND [ARGS]...
+
+Commands:
+  init
+  verify
+  diff
+```
 
 ## 1. Initialize a Baseline Snapshot
 
