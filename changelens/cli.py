@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import json
 import dataclasses
@@ -19,6 +20,9 @@ app = typer.Typer(
     add_completion=False,
 )
 console = Console()
+
+# Global check for environment-level cryptographic signing
+SECRET_KEY = os.getenv("CHANGELENS_SECRET")
 
 def render_report(report: IntegrityReport):
     """Shared UI component to render the IntegrityReport using Rich."""
@@ -59,7 +63,6 @@ def handle_file_exports(report: IntegrityReport, json_path: Path = None, md_path
     """Processes optional reporting export requests to disk files."""
     if json_path:
         with open(json_path, "w", encoding="utf-8") as f:
-            # Leverage dataclasses serialization natively
             json.dump(dataclasses.asdict(report), f, indent=4)
         console.print(f"[dim]Exported JSON log to: {json_path}[/dim]")
 
@@ -68,6 +71,7 @@ def handle_file_exports(report: IntegrityReport, json_path: Path = None, md_path
         with open(md_path, "w", encoding="utf-8") as f:
             f.write(markdown_content)
         console.print(f"[dim]Exported Markdown report to: {md_path}[/dim]")
+
 
 @app.command(name="init")
 def init(
@@ -85,9 +89,11 @@ def init(
         exclusion_list = list(exclude) if exclude else []
         console.print(f"Initializing baseline snapshot for: [cyan]'{target_path}'[/cyan]...")
         
-        # Generator handles all processing internally
+        if SECRET_KEY:
+            console.print("[bold yellow][INFO] Cryptographic Signing Enabled via environment context.[/bold yellow]")
+
         snapshot = create_snapshot_model(str(target_path), exclude_patterns=exclusion_list)
-        save_snapshot(snapshot, str(output))
+        save_snapshot(snapshot, str(output), secret_key=SECRET_KEY)
         
         total = snapshot["metadata"]["total_files"]
         console.print(f"[bold green][SUCCESS] Baseline created tracking {total} files.[/bold green]")
@@ -95,6 +101,7 @@ def init(
     except Exception as e:
         console.print(f"[bold red][CRITICAL] Initialization failed: {e}[/bold red]")
         raise typer.Exit(code=1)
+
 
 @app.command(name="verify")
 def verify(
@@ -106,7 +113,11 @@ def verify(
     """Compare a live directory against a baseline snapshot."""
     try:
         target_path = directory.resolve()
-        stored_snapshot = load_snapshot(str(snapshot_file))
+        
+        if SECRET_KEY:
+            console.print("[bold yellow][INFO] Executing Authenticated Signature Check validation...[/bold yellow]")
+
+        stored_snapshot = load_snapshot(str(snapshot_file), secret_key=SECRET_KEY)
         report = verify_live_directory(stored_snapshot, str(target_path))
         
         render_report(report)
@@ -115,6 +126,9 @@ def verify(
         if not report.summary.is_clean:
             raise typer.Exit(code=2)
             
+    except ValueError as e:
+        console.print(f"[bold red][CRITICAL] {e}[/bold red]")
+        raise typer.Exit(code=1)
     except typer.Exit:
         raise
     except Exception as e:
@@ -131,8 +145,8 @@ def diff(
 ):
     """Compare two stored snapshot files offline."""
     try:
-        base_snapshot = load_snapshot(str(base_file))
-        target_snapshot = load_snapshot(str(target_file))
+        base_snapshot = load_snapshot(str(base_file), secret_key=SECRET_KEY)
+        target_snapshot = load_snapshot(str(target_file), secret_key=SECRET_KEY)
         report = calculate_snapshot_diff(base_snapshot, target_snapshot)
         
         render_report(report)
@@ -141,6 +155,9 @@ def diff(
         if not report.summary.is_clean:
             raise typer.Exit(code=2)
             
+    except ValueError as e:
+        console.print(f"[bold red][CRITICAL] {e}[/bold red]")
+        raise typer.Exit(code=1)
     except typer.Exit:
         raise
     except Exception as e:

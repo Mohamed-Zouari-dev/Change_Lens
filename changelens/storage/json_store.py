@@ -1,27 +1,38 @@
 import json
-from pathlib import Path
-from typing import Dict
+import hmac
+from typing import Dict, Any
 
-def save_snapshot(snapshot_data: Dict, output_path: str) -> None:
+def save_snapshot(snapshot: Dict[str, Any], filepath: str, secret_key: str = None) -> None:
     """
-    Serializes the snapshot data model and writes it to disk as a JSON file.
+    Saves a snapshot dictionary to disk. Appends a tamper-proof 
+    cryptographic signature if a secret key is supplied.
     """
-    path = Path(output_path)
-    
-    # Ensure parent directories exist before saving
-    path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(path, 'w', encoding='utf-8') as f:
-        # Using indent=4 makes the JSON human-readable for debugging
-        json.dump(snapshot_data, f, indent=4)
+    out_data = dict(snapshot)
+    if secret_key:
+        from core.security import compute_signature
+        out_data["signature"] = compute_signature(out_data, secret_key)
 
-def load_snapshot(file_path: str) -> Dict:
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(out_data, f, indent=4)
+
+def load_snapshot(filepath: str, secret_key: str = None) -> Dict[str, Any]:
     """
-    Loads a JSON snapshot from disk back into a Python dictionary.
+    Loads a snapshot file from disk and performs signature verification 
+    if a tracking protection key is active.
     """
-    path = Path(file_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Snapshot file not found: '{file_path}'")
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    if secret_key:
+        from core.security import compute_signature
+        if "signature" not in data:
+            raise ValueError("Security Violation: Target snapshot file lacks an authenticity signature.")
         
-    with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        stored_signature = data["signature"]
+        expected_signature = compute_signature(data, secret_key)
+        
+        # Constant-time verification loop prevents signature extraction via execution timing variance
+        if not hmac.compare_digest(stored_signature, expected_signature):
+            raise ValueError("CRITICAL SECURITY ALERT: The baseline snapshot file has been tampered with or modified!")
+
+    return data

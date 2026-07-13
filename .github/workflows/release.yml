@@ -1,0 +1,41 @@
+name: Build and Publish Production Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers the pipeline only when pushing a version tag (e.g., v1.0.0)
+
+jobs:
+  publish-release:
+    name: Build Python Wheel and Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Crucial: Gives the runner authorization to upload release assets
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyPA Build System Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Compile Distribution Artifacts
+        run: |
+          python -m build
+
+      - name: Publish Artifacts to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          generate_release_notes: true  # Automatically parses your commit messages into a clean changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Seamless native authentication
