@@ -69,7 +69,6 @@ def handle_file_exports(report: IntegrityReport, json_path: Path = None, md_path
             f.write(markdown_content)
         console.print(f"[dim]Exported Markdown report to: {md_path}[/dim]")
 
-
 @app.command(name="init")
 def init(
     directory: Path = typer.Argument(Path("."), help="The target directory path to initialize."),
@@ -86,12 +85,7 @@ def init(
         exclusion_list = list(exclude) if exclude else []
         console.print(f"Initializing baseline snapshot for: [cyan]'{target_path}'[/cyan]...")
         
-        # Look ahead to print an informative terminal notice
-        from core.filters import load_ignore_file_patterns
-        found_file_rules = load_ignore_file_patterns(target_path)
-        if found_file_rules:
-            console.print(f"[dim]Auto-detected .changelensignore with {len(found_file_rules)} rules.[/dim]")
-            
+        # Generator handles all processing internally
         snapshot = create_snapshot_model(str(target_path), exclude_patterns=exclusion_list)
         save_snapshot(snapshot, str(output))
         
@@ -101,7 +95,6 @@ def init(
     except Exception as e:
         console.print(f"[bold red][CRITICAL] Initialization failed: {e}[/bold red]")
         raise typer.Exit(code=1)
-    
 
 @app.command(name="verify")
 def verify(
