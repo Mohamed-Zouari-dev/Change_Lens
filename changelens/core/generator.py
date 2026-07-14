@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, List
 from datetime import datetime
-from core.hasher import generate_file_states
-from core.filters import is_excluded, load_ignore_file_patterns
+from changelens.core.hasher import generate_file_states
+from changelens.core.filters import is_excluded, load_ignore_file_patterns
 
 def create_snapshot_model(target_dir: str, exclude_patterns: List[str] = None) -> Dict[str, Any]:
     """

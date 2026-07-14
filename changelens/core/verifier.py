@@ -1,6 +1,6 @@
 from typing import Dict, Any
-from core.generator import create_snapshot_model
-from core.diff_engine import calculate_snapshot_diff
+from changelens.core.generator import create_snapshot_model
+from changelens.core.diff_engine import calculate_snapshot_diff
 from models import IntegrityReport
 
 def verify_live_directory(stored_snapshot: Dict[str, Any], target_directory: str) -> IntegrityReport:

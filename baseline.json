@@ -1,0 +1,13 @@
+{
+    "metadata": {
+        "root_directory": "/home/mohamed/Change_Lens/fim_test",
+        "timestamp": "2026-07-14T11:49:01.696177",
+        "total_files": 1,
+        "exclusions": []
+    },
+    "files": {
+        "test.txt": {
+            "hash": "516ad7b388b21e05e8c56229f063d112e70a2fea45fdd357e8ff44e6a5bce689"
+        }
+    }
+}

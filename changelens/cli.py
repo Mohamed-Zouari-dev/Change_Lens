@@ -7,10 +7,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from core.generator import create_snapshot_model
-from core.verifier import verify_live_directory
-from core.diff_engine import calculate_snapshot_diff
-from core.reporters import generate_markdown_report
+from changelens.core.generator import create_snapshot_model
+from changelens.core.verifier import verify_live_directory
+from changelens.core.diff_engine import calculate_snapshot_diff
+from changelens.core.reporters import generate_markdown_report
 from storage.json_store import save_snapshot, load_snapshot
 from models import IntegrityReport
 

@@ -9,7 +9,7 @@ def save_snapshot(snapshot: Dict[str, Any], filepath: str, secret_key: str = Non
     """
     out_data = dict(snapshot)
     if secret_key:
-        from core.security import compute_signature
+        from changelens.core.security import compute_signature
         out_data["signature"] = compute_signature(out_data, secret_key)
 
     with open(filepath, "w", encoding="utf-8") as f:
@@ -24,7 +24,7 @@ def load_snapshot(filepath: str, secret_key: str = None) -> Dict[str, Any]:
         data = json.load(f)
 
     if secret_key:
-        from core.security import compute_signature
+        from changelens.core.security import compute_signature
         if "signature" not in data:
             raise ValueError("Security Violation: Target snapshot file lacks an authenticity signature.")
         

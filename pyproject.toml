@@ -14,6 +14,7 @@ authors = [
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
     "Topic :: Security",
 ]
 dependencies = [
@@ -22,8 +23,10 @@ dependencies = [
 ]
 
 [project.scripts]
-changelens = "cli:app"
+changelens = "changelens.cli:app"
 
 [tool.setuptools]
-py-modules = ["cli", "models"]
-packages = ["core", "storage"]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["changelens*"]
