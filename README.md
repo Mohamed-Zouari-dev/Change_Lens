@@ -7,13 +7,13 @@ ChangeLens is distributed as a pre-built Python Wheel via GitHub Releases.
 Install the latest release directly with pip:
 
 ```bash
-python -m pip install https://github.com/Mohamed-Zouari-dev/Change_Lens/releases/download/v1.0.0/changelens-1.0.0-py3-none-any.whl
+python -m pip install changelens
 ```
 
 Alternatively, if `pip` is already available on your PATH:
 
 ```bash
-pip install https://github.com/Mohamed-Zouari-dev/Change_Lens/releases/download/v1.0.0/changelens-1.0.0-py3-none-any.whl
+pip install changelens
 ```
 
 ### Windows Users
